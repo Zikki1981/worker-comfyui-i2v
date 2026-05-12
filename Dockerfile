@@ -12,7 +12,8 @@ RUN comfy node install \
     comfyui-kjnodes \
     rgthree-comfy \
     comfyui-impact-pack \
-    comfyui-frame-interpolation
+    comfyui-frame-interpolation \
+    comfyui-florence2
 
 # ============================================
 # VOLUME SETUP SCRIPT
