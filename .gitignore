@@ -1,0 +1,36 @@
+# Docker
+*.tar
+
+# Models (too large for git)
+models/
+*.safetensors
+*.ckpt
+*.pt
+*.pth
+*.bin
+
+# Python
+__pycache__/
+*.py[cod]
+*$py.class
+.env
+.venv
+env/
+venv/
+
+# IDE
+.idea/
+.vscode/
+*.swp
+*.swo
+
+# OS
+.DS_Store
+Thumbs.db
+
+# Logs
+*.log
+logs/
+
+# Test outputs
+output/
