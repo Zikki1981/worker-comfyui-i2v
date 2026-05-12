@@ -2,37 +2,66 @@
 
 Custom ComfyUI worker optimized for Image-to-Video generation using Wan2.2 I2V models.
 
-## Features
+## Configuration
 
-- **Wan2.2 I2V 14B** - High quality image-to-video generation
-- **SVI Pro LoRAs** - Enhanced video quality
-- **LightX2V** - 4-step distillation for faster inference
-- **Custom LoRAs** - Support for CivitAI LoRAs
+| Setting | Value |
+|---------|-------|
+| **Region** | EU-RO-1 (Romania) |
+| **GPU** | A100 80GB |
 
-## Quick Start
+## Setup
 
-### 1. Build the Docker image
+### 1. Populate Network Volume
+
+Upload models via S3 API:
 
 ```bash
-docker build -t your-dockerhub/worker-comfyui-i2v:latest .
-docker push your-dockerhub/worker-comfyui-i2v:latest
+# Configure AWS CLI
+aws configure --profile runpod
+# Access Key: your_runpod_user_id
+# Secret Key: your_s3_api_key
+# Region: eu-ro-1
+
+# Upload models
+aws s3 sync ./models s3://YOUR_VOLUME_ID/models/ \
+  --profile runpod \
+  --region eu-ro-1 \
+  --endpoint-url https://s3api-eu-ro-1.runpod.io/
 ```
 
-### 2. Create RunPod Serverless Endpoint
+### 2. Create Serverless Endpoint
 
 1. Go to [RunPod Serverless](https://www.runpod.io/console/serverless)
-2. Create new endpoint
-3. Use your Docker image: `your-dockerhub/worker-comfyui-i2v:latest`
-4. Select GPU: **H100 SXM** (recommended) or **A100 80GB**
-5. Set idle timeout: 5-10 minutes
+2. Create **Template**:
+   - **Container Image**: `ghcr.io/zikki1981/worker-comfyui-i2v:latest`
+   - **Container Disk**: 20GB
+   - **Volume Mount Path**: `/runpod-volume`
+3. Create **Endpoint**:
+   - Select your template
+   - **GPU**: A100 80GB
+   - **Network Volume**: Your volume ID
+   - **Active Workers**: 0-1
+   - **Max Workers**: 1
+   - **Idle Timeout**: 5 minutes
 
-### 3. API Usage
+## API Usage
 
 ```python
 import requests
+import base64
+import json
+import time
 
-RUNPOD_API_KEY = "your-api-key"
+RUNPOD_API_KEY = "your_api_key"
 ENDPOINT_ID = "your-endpoint-id"
+
+# Load workflow JSON (exported from ComfyUI)
+with open("workflow_api.json") as f:
+    workflow = json.load(f)
+
+# Encode input image
+with open("input.png", "rb") as f:
+    image_b64 = base64.b64encode(f.read()).decode()
 
 # Submit job
 response = requests.post(
@@ -43,13 +72,8 @@ response = requests.post(
     },
     json={
         "input": {
-            "workflow": workflow_json,  # Your ComfyUI workflow
-            "images": [
-                {
-                    "name": "input.png",
-                    "image": "base64_encoded_image"
-                }
-            ]
+            "workflow": workflow,
+            "images": [{"name": "input.png", "image": image_b64}]
         }
     }
 )
@@ -57,40 +81,44 @@ response = requests.post(
 job_id = response.json()["id"]
 
 # Poll for result
-status_response = requests.get(
-    f"https://api.runpod.ai/v2/{ENDPOINT_ID}/status/{job_id}",
-    headers={"Authorization": f"Bearer {RUNPOD_API_KEY}"}
-)
+while True:
+    status = requests.get(
+        f"https://api.runpod.ai/v2/{ENDPOINT_ID}/status/{job_id}",
+        headers={"Authorization": f"Bearer {RUNPOD_API_KEY}"}
+    ).json()
+
+    if status["status"] == "COMPLETED":
+        video_b64 = status["output"]["images"][0]["data"]
+        with open("output.mp4", "wb") as f:
+            f.write(base64.b64decode(video_b64))
+        break
+    elif status["status"] == "FAILED":
+        print(f"Failed: {status}")
+        break
+
+    time.sleep(3)
 ```
 
-## Adding Custom LoRAs
+## Models Required
 
-Edit the `Dockerfile` and add your CivitAI LoRAs:
+### Diffusion Models (`/models/diffusion_models/Wan2.2/`)
+- `wan2.2_i2v_high_noise_14B_fp16.safetensors`
+- `wan2.2_i2v_low_noise_14B_fp16.safetensors`
 
-```dockerfile
-RUN curl -L -o /comfyui/models/loras/your_lora.safetensors \
-    "https://civitai.com/api/download/models/VERSION_ID?token=YOUR_CIVITAI_TOKEN"
-```
+### Text Encoders (`/models/text_encoders/`)
+- `umt5_xxl_fp16.safetensors`
 
-## Models Included
-
-### Diffusion Models
-- `wan2.2_i2v_high_noise_14B_fp16.safetensors` (~14GB)
-- `wan2.2_i2v_low_noise_14B_fp16.safetensors` (~14GB)
-
-### Text Encoders
-- `umt5_xxl_fp16.safetensors` (~10GB)
-
-### VAE
+### VAE (`/models/vae/`)
 - `wan_2.1_vae.safetensors`
 - `wan2.2_vae.safetensors`
 
-### LoRAs
+### LoRAs (`/models/loras/`)
 - `SVI_Wan2.2-I2V-A14B_high_noise_lora_v2.0_pro.safetensors`
 - `SVI_Wan2.2-I2V-A14B_low_noise_lora_v2.0_pro.safetensors`
 - `lightx2v_I2V_14B_480p_cfg_step_distill_rank256_bf16.safetensors`
+- Your custom I2V LoRAs
 
-## Custom Nodes
+## Custom Nodes (in Docker image)
 
 - ComfyUI-WanVideoWrapper
 - ComfyUI-VideoHelperSuite
@@ -102,17 +130,21 @@ RUN curl -L -o /comfyui/models/loras/your_lora.safetensors \
 
 ## Cost Estimation
 
-- **H100 SXM**: ~$2.39/hour
-- **A100 80GB**: ~$1.89/hour
-- **Average I2V generation**: 30-60 seconds
-- **Cost per generation**: ~$0.02-0.04
+| Item | Cost |
+|------|------|
+| A100 80GB | ~$1.89/hour |
+| Avg generation | 45-70 seconds |
+| Cost per generation | ~$0.025-0.035 |
+| Network Volume (100GB) | ~$10/month |
 
-## Environment Variables
+## Building the Docker Image
 
-| Variable | Description | Default |
-|----------|-------------|---------|
-| `COMFY_POLLING_INTERVAL` | Polling interval in ms | 500 |
-| `COMFY_POLLING_MAX_RETRIES` | Max polling retries | 300 |
+```bash
+git clone https://github.com/Zikki1981/worker-comfyui-i2v.git
+cd worker-comfyui-i2v
+docker build -t ghcr.io/zikki1981/worker-comfyui-i2v:latest .
+docker push ghcr.io/zikki1981/worker-comfyui-i2v:latest
+```
 
 ## License
 
