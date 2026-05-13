@@ -45,6 +45,16 @@ RUN cd /comfyui/custom_nodes && \
     git clone https://github.com/Fannovel16/ComfyUI-RIFE.git && \
     cd ComfyUI-RIFE && pip install -r requirements.txt || true
 
+# Additional nodes from workflow
+RUN cd /comfyui/custom_nodes && \
+    git clone https://github.com/Kangkang625/ComfyUI-Addoor.git || true && \
+    git clone https://github.com/spacepxl/ComfyUI-pause.git || true && \
+    git clone https://github.com/ltdrdata/ComfyUI_Fill-Nodes.git || true
+
+# K3NK custom nodes (from K3NK workflow)
+RUN cd /comfyui/custom_nodes && \
+    git clone https://github.com/K3NK/ComfyUI-K3NKImageGrab.git || true
+
 # ============================================
 # VOLUME SETUP SCRIPT
 # Creates symlinks from Network Volume to ComfyUI
