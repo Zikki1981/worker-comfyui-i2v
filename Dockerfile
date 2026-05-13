@@ -40,6 +40,11 @@ RUN cd /comfyui/custom_nodes && \
     git clone https://github.com/ClownsharkBatwing/RES4LYF.git && \
     cd RES4LYF && pip install -r requirements.txt || true
 
+# FL RIFE Frame Interpolation (for FL_RIFE node)
+RUN cd /comfyui/custom_nodes && \
+    git clone https://github.com/Fannovel16/ComfyUI-RIFE.git && \
+    cd ComfyUI-RIFE && pip install -r requirements.txt || true
+
 # ============================================
 # VOLUME SETUP SCRIPT
 # Creates symlinks from Network Volume to ComfyUI
