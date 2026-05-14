@@ -71,6 +71,10 @@ RUN apt-get update && apt-get install -y --no-install-recommends \
     g++ \
     && rm -rf /var/lib/apt/lists/*
 
+# Set CC environment variable for Triton to find the C compiler
+ENV CC=/usr/bin/gcc
+ENV CXX=/usr/bin/g++
+
 # ============================================
 # SAGEATTENTION - Required for attention_mode: sageattn in workflows
 # Same version as Olares (1.0.6)
