@@ -24,6 +24,7 @@ RUN cd /comfyui/custom_nodes && \
     git clone https://github.com/TinyTerra/ComfyUI_tinyterraNodes.git
 
 # WanVideoWrapper - install from GitHub for latest version with WanVideoApplyNAG
+
 RUN cd /comfyui/custom_nodes && \
     git clone https://github.com/kijai/ComfyUI-WanVideoWrapper.git && \
     cd ComfyUI-WanVideoWrapper && pip install -r requirements.txt || true
@@ -61,6 +62,12 @@ RUN cd /comfyui/custom_nodes && \
 # K3NK custom nodes (from K3NK workflow)
 RUN cd /comfyui/custom_nodes && \
     git clone https://github.com/K3NK/ComfyUI-K3NKImageGrab.git || true
+
+# ============================================
+# SAGEATTENTION - Required for attention_mode: sageattn in workflows
+# Same version as Olares (1.0.6)
+# ============================================
+RUN pip install --no-cache-dir sageattention==1.0.6
 
 # ============================================
 # VOLUME SETUP SCRIPT
