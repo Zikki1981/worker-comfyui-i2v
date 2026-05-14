@@ -69,6 +69,7 @@ RUN cd /comfyui/custom_nodes && \
 RUN apt-get update && apt-get install -y --no-install-recommends \
     gcc \
     g++ \
+    python3-dev \
     && rm -rf /var/lib/apt/lists/*
 
 # Set CC environment variable for Triton to find the C compiler
