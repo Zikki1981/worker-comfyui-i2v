@@ -25,9 +25,14 @@ RUN cd /comfyui/custom_nodes && \
     git clone https://github.com/kijai/ComfyUI-WanVideoWrapper.git && \
     cd ComfyUI-WanVideoWrapper && pip install -r requirements.txt || true
 
-# FramePackWrapper needs git clone (not in registry)
+# FramePackWrapper (original by kijai) - contains FramePackFindNearestBucket
 RUN cd /comfyui/custom_nodes && \
-    git clone https://github.com/kijai/ComfyUI-FramePackWrapper_Plus.git && \
+    git clone https://github.com/kijai/ComfyUI-FramePackWrapper.git && \
+    cd ComfyUI-FramePackWrapper && pip install -r requirements.txt || true
+
+# FramePackWrapper_Plus (extended version)
+RUN cd /comfyui/custom_nodes && \
+    git clone https://github.com/ShmuelRonen/ComfyUI-FramePackWrapper_Plus.git && \
     cd ComfyUI-FramePackWrapper_Plus && pip install -r requirements.txt || true
 
 # Ergouzi nodes (for EG_WXZ_QH) - create web/extensions folder first to fix import error
