@@ -17,8 +17,11 @@ RUN comfy node install \
     comfyui-easy-use \
     comfymath \
     comfyui-custom-scripts \
-    comfyui-mxtoolkit \
-    comfyui-tinyterranodes
+    comfyui-mxtoolkit
+
+# TinyTerraNodes - install from GitHub (registry name has issues)
+RUN cd /comfyui/custom_nodes && \
+    git clone https://github.com/TinyTerra/ComfyUI_tinyterraNodes.git
 
 # WanVideoWrapper - install from GitHub for latest version with WanVideoApplyNAG
 RUN cd /comfyui/custom_nodes && \
