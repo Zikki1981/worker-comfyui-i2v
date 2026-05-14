@@ -64,6 +64,14 @@ RUN cd /comfyui/custom_nodes && \
     git clone https://github.com/K3NK/ComfyUI-K3NKImageGrab.git || true
 
 # ============================================
+# BUILD TOOLS - Required for Triton JIT compilation
+# ============================================
+RUN apt-get update && apt-get install -y --no-install-recommends \
+    gcc \
+    g++ \
+    && rm -rf /var/lib/apt/lists/*
+
+# ============================================
 # SAGEATTENTION - Required for attention_mode: sageattn in workflows
 # Same version as Olares (1.0.6)
 # ============================================
