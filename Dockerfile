@@ -92,6 +92,13 @@ COPY scripts/setup_volume.sh /setup_volume.sh
 RUN chmod +x /setup_volume.sh
 
 # ============================================
+# CUSTOM HANDLER WITH VIDEO SUPPORT
+# Override base handler to support gifs/video outputs
+# Based on PR #133 from runpod-workers/worker-comfyui
+# ============================================
+COPY src/handler.py /handler.py
+
+# ============================================
 # HANDLER CONFIG
 # ============================================
 ENV COMFY_POLLING_INTERVAL=500
