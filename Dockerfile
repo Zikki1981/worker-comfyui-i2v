@@ -65,16 +65,18 @@ RUN cd /comfyui/custom_nodes && \
 
 # ============================================
 # BUILD TOOLS - Required for Triton JIT compilation
+# Python 3.12 headers needed for SageAttention/Triton JIT
 # ============================================
 RUN apt-get update && apt-get install -y --no-install-recommends \
     gcc \
     g++ \
-    python3-dev \
+    python3.12-dev \
     && rm -rf /var/lib/apt/lists/*
 
-# Set CC environment variable for Triton to find the C compiler
+# Set compiler and include paths for Triton JIT
 ENV CC=/usr/bin/gcc
 ENV CXX=/usr/bin/g++
+ENV CPATH=/usr/include/python3.12:$CPATH
 
 # ============================================
 # SAGEATTENTION - Required for attention_mode: sageattn in workflows
