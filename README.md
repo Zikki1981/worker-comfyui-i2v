@@ -88,7 +88,13 @@ while True:
     ).json()
 
     if status["status"] == "COMPLETED":
-        video_b64 = status["output"]["images"][0]["data"]
+        # Videos are in 'videos' field (new handler), fallback to 'images'
+        output = status["output"]
+        if "videos" in output and output["videos"]:
+            video_b64 = output["videos"][0]["data"]
+        else:
+            video_b64 = output["images"][0]["data"]
+
         with open("output.mp4", "wb") as f:
             f.write(base64.b64decode(video_b64))
         break
@@ -117,6 +123,38 @@ while True:
 - `SVI_Wan2.2-I2V-A14B_low_noise_lora_v2.0_pro.safetensors`
 - `lightx2v_I2V_14B_480p_cfg_step_distill_rank256_bf16.safetensors`
 - Your custom I2V LoRAs
+
+## Custom Handler with Video Support
+
+This worker uses a custom handler (`src/handler.py`) based on [PR #133](https://github.com/runpod-workers/worker-comfyui/pull/133) to support video outputs.
+
+**Why?** The base `runpod/worker-comfyui` handler only collects `images` from ComfyUI outputs. Video generation nodes like `VHS_VideoCombine` output MP4 files in a field called `gifs` which the base handler ignores.
+
+**Changes:**
+- Videos are fetched via ComfyUI's `/view` endpoint (same as images)
+- Videos are returned in a separate `videos` field in the response
+- Supports both S3 upload and base64 encoding (fallback)
+
+**Response format:**
+```json
+{
+  "output": {
+    "images": [],
+    "videos": [
+      {"filename": "video.mp4", "type": "base64", "data": "AAAA..."}
+    ]
+  },
+  "status": "COMPLETED"
+}
+```
+
+## VIP Worker Integration
+
+The `vip_worker.py` on VixenVision applies optimizations before sending workflows to RunPod:
+
+1. **GPU cleanup muting**: Nodes like `easy cleanGpuUsed` are muted (`is_muted: true`) since RunPod workers have dedicated GPUs - no need to purge VRAM between jobs.
+
+2. **Video retrieval**: Checks both `videos` (new handler) and `images` (fallback) fields.
 
 ## Custom Nodes (in Docker image)
 
